@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Sign in to StudentMS — academic directory, grading, and analytics workspace for students, faculty, and administrators.">
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#F7F8FA">
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0B0D12">
+    <title>Sign In — StudentMS</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%234F46E5'/%3E%3Cpath d='M16 7 4 13l12 6 10-5v7h2v-8L16 7zm-7 9.5v4.5c0 2.5 3.1 4.5 7 4.5s7-2 7-4.5v-4.5l-7 3.5-7-3.5z' fill='%23FFFFFF'/%3E%3C/svg%3E">
+    <script>
+        (function () {
+            try {
+                var s = localStorage.getItem('sms_theme');
+                var t = (s === 'light' || s === 'dark') ? s : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+                document.documentElement.setAttribute('data-theme', t);
+            } catch (e) {}
+        })();
+    </script>
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+    <a href="#loginForm" class="skip-link">Skip to sign-in form</a>
+    <div class="auth-layout">
+        <aside class="auth-brand-panel" aria-label="Product overview">
+            <div class="auth-logo">
+                <span class="sidebar-logo" aria-hidden="true"><i data-lucide="graduation-cap"></i></span>
+                <span>StudentMS</span>
+            </div>
+            <div class="auth-pitch">
+                <h2>Academic records, grading, and cohort analytics in one workspace.</h2>
+                <p>Built for registrars, faculty, and students with role-scoped access and automatic grade evaluation.</p>
+                <ul class="auth-points">
+                    <li><i data-lucide="check-circle-2"></i><span>Server-side grade calculation across a 7-band scale</span></li>
+                    <li><i data-lucide="shield-check"></i><span>Role-based permissions for Student, Teacher, and Admin</span></li>
+                    <li><i data-lucide="bar-chart-3"></i><span>Live cohort analytics, filtering, and CSV export</span></li>
+                </ul>
+            </div>
+            <div class="auth-fineprint">Student Management System &bull; Spring Boot &amp; MySQL</div>
+        </aside>
+
+        <main class="auth-form-panel">
+            <div class="auth-theme">
+                <button type="button" class="icon-btn" id="themeToggleBtn" data-theme-toggle aria-label="Toggle color theme">
+                    <i data-lucide="moon"></i>
+                </button>
+            </div>
+
+            <div class="auth-card">
+                <div class="auth-mobile-logo">
+                    <span class="sidebar-logo" aria-hidden="true"><i data-lucide="graduation-cap"></i></span>
+                    <span>StudentMS</span>
+                </div>
+
+                <div class="auth-head">
+                    <h1>Sign in to your account</h1>
+                    <p>Choose your role or sign in directly with your institutional email.</p>
+                </div>
+
+                <div class="role-tabs" role="tablist" aria-label="Filter sign-in by role">
+                    <button type="button" class="role-tab active" data-role="" role="tab" aria-selected="true">
+                        <span>All</span>
+                    </button>
+                    <button type="button" class="role-tab" data-role="STUDENT" role="tab" aria-selected="false">
+                        <i data-lucide="graduation-cap"></i><span>Student</span>
+                    </button>
+                    <button type="button" class="role-tab" data-role="TEACHER" role="tab" aria-selected="false">
+                        <i data-lucide="book-open"></i><span>Teacher</span>
+                    </button>
+                    <button type="button" class="role-tab" data-role="ADMIN" role="tab" aria-selected="false">
+                        <i data-lucide="shield-check"></i><span>Admin</span>
+                    </button>
+                </div>
+
+                <div class="alert" id="loginAlert" role="alert" hidden>
+                    <i data-lucide="alert-circle"></i>
+                    <span id="loginAlertText"></span>
+                </div>
+
+                <form id="loginForm" novalidate>
+                    <input type="hidden" name="role" id="selectedRole" value="">
+
+                    <div class="form-group">
+                        <label class="form-label" for="loginEmail">Email address <span class="required">*</span></label>
+                        <input type="email" class="form-control" id="loginEmail" name="email" required
+                               placeholder="name@university.edu" autocomplete="email">
+                        <div class="form-error"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="loginPassword">Password <span class="required">*</span></label>
+                        <div class="password-wrapper">
+                            <input type="password" class="form-control" id="loginPassword" name="password" required
+                                   placeholder="Enter your password" autocomplete="current-password">
+                            <button type="button" class="password-toggle" id="togglePassBtn" aria-label="Show password">
+                                <i data-lucide="eye"></i>
+                            </button>
+                        </div>
+                        <div class="form-error"></div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-block" id="loginSubmitBtn">
+                        <i data-lucide="log-in"></i><span>Sign In</span>
+                    </button>
+                </form>
+
+                <details class="demo-details">
+                    <summary>
+                        <span>Demo mode (1-click role access)</span>
+                        <i data-lucide="chevron-down"></i>
+                    </summary>
+                    <div class="demo-body">
+                        <p>Sign in immediately with a seeded demo account to explore role permissions.</p>
+                        <div class="demo-pills">
+                            <button type="button" class="demo-pill student" data-demo-role="STUDENT" data-demo-email="alice.johnson@university.edu" data-demo-pass="Student@123">
+                                <i data-lucide="graduation-cap"></i><span>Student</span>
+                            </button>
+                            <button type="button" class="demo-pill teacher" data-demo-role="TEACHER" data-demo-email="teacher@university.edu" data-demo-pass="Teacher@123">
+                                <i data-lucide="book-open"></i><span>Teacher</span>
+                            </button>
+                            <button type="button" class="demo-pill admin" data-demo-role="ADMIN" data-demo-email="admin@university.edu" data-demo-pass="Admin@123">
+                                <i data-lucide="shield-check"></i><span>Admin</span>
+                            </button>
+                        </div>
+                    </div>
+                </details>
+
+                <div class="auth-footer">
+                    New to StudentMS? <a href="/pages/register.html">Create an account</a>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="/vendor/lucide.min.js"></script>
+    <script src="/js/app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if (Auth.isLoggedIn()) {
+                window.location.href = '/index.html';
+                return;
+            }
+
+            const themeBtn = document.getElementById('themeToggleBtn');
+            if (themeBtn) themeBtn.addEventListener('click', () => Theme.toggle());
+
+            // Role tab switching
+            document.querySelectorAll('.role-tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    document.querySelectorAll('.role-tab').forEach(t => {
+                        t.classList.remove('active');
+                        t.setAttribute('aria-selected', 'false');
+                    });
+                    tab.classList.add('active');
+                    tab.setAttribute('aria-selected', 'true');
+                    document.getElementById('selectedRole').value = tab.dataset.role;
+                });
+            });
+
+            // Password visibility toggle
+            const passInput = document.getElementById('loginPassword');
+            const toggleBtn = document.getElementById('togglePassBtn');
+            toggleBtn.addEventListener('click', () => {
+                const show = passInput.type === 'password';
+                passInput.type = show ? 'text' : 'password';
+                toggleBtn.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+                toggleBtn.innerHTML = `<i data-lucide="${show ? 'eye-off' : 'eye'}"></i>`;
+                lucide.createIcons();
+            });
+
+            // Inline blur validation
+            const emailInput = document.getElementById('loginEmail');
+            emailInput.addEventListener('blur', () => FormValidator.validateField(emailInput));
+            passInput.addEventListener('blur', () => FormValidator.validateField(passInput));
+
+            // Demo buttons
+            document.querySelectorAll('[data-demo-role]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    quickDemoLogin(btn.dataset.demoEmail, btn.dataset.demoPass, btn.dataset.demoRole);
+                });
+            });
+
+            // Login form submission
+            document.getElementById('loginForm').addEventListener('submit', async e => {
+                e.preventDefault();
+                const okEmail = FormValidator.validateField(emailInput);
+                const okPass = FormValidator.validateField(passInput);
+                if (!okEmail || !okPass) return;
+
+                const role = document.getElementById('selectedRole').value || null;
+                await performLogin(emailInput.value.trim(), passInput.value, role);
+            });
+        });
+
+        async function quickDemoLogin(email, password, role) {
+            document.getElementById('loginEmail').value = email;
+            document.getElementById('loginPassword').value = password;
+            document.querySelectorAll('.role-tab').forEach(t => {
+                const match = t.dataset.role === role;
+                t.classList.toggle('active', match);
+                t.setAttribute('aria-selected', match ? 'true' : 'false');
+            });
+            document.getElementById('selectedRole').value = role;
+            await performLogin(email, password, role);
+        }
+
+        async function performLogin(email, password, role) {
+            const btn = document.getElementById('loginSubmitBtn');
+            const alertBox = document.getElementById('loginAlert');
+            const alertText = document.getElementById('loginAlertText');
+            alertBox.hidden = true;
+
+            btn.classList.add('loading');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner" aria-hidden="true"></span><span>Signing in...</span>';
+
+            try {
+                const payload = { email, password };
+                if (role) payload.role = role;
+                const res = await API.login(payload);
+                Auth.setSession(res.data);
+                Toast.success('Signed in', `Welcome back, ${res.data.user.fullName}`);
+                setTimeout(() => window.location.href = '/index.html', 300);
+            } catch (err) {
+                const msg = err.data?.message || 'Invalid email or password';
+                alertText.textContent = msg;
+                alertBox.hidden = false;
+                Toast.error('Sign-in failed', msg);
+            } finally {
+                btn.classList.remove('loading');
+                btn.disabled = false;
+                btn.innerHTML = '<i data-lucide="log-in"></i><span>Sign In</span>';
+                lucide.createIcons();
+            }
+        }
+    </script>
+</body>
+</html>

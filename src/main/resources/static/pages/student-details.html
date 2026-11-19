@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="StudentMS Transcript & Profile — complete personal and academic assessment record.">
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#F7F8FA">
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0B0D12">
+    <title>Student Profile — StudentMS</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%234F46E5'/%3E%3Cpath d='M16 7 4 13l12 6 10-5v7h2v-8L16 7zm-7 9.5v4.5c0 2.5 3.1 4.5 7 4.5s7-2 7-4.5v-4.5l-7 3.5-7-3.5z' fill='%23FFFFFF'/%3E%3C/svg%3E">
+    <script>
+        (function () {
+            try {
+                var s = localStorage.getItem('sms_theme');
+                var t = (s === 'light' || s === 'dark') ? s : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+                document.documentElement.setAttribute('data-theme', t);
+            } catch (e) {}
+        })();
+    </script>
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+    <a href="#mainContent" class="skip-link">Skip to student profile</a>
+    <div class="app-container">
+        <aside class="sidebar" id="sidebar" aria-label="Primary navigation"></aside>
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+        <div class="main-wrapper">
+            <header class="header"></header>
+
+            <main class="main-content" id="mainContent">
+                <div class="page-header">
+                    <div>
+                        <h1 class="page-title" id="studentNameHeading">Student Profile</h1>
+                        <p class="page-subtitle" id="studentCodeSub">Loading record...</p>
+                    </div>
+                    <div class="page-actions">
+                        <a href="/pages/students.html" class="btn btn-ghost">
+                            <i data-lucide="arrow-left"></i><span>Directory</span>
+                        </a>
+                        <button type="button" class="btn btn-ghost" id="printProfileBtn">
+                            <i data-lucide="printer"></i><span>Print</span>
+                        </button>
+                        <button type="button" class="btn btn-primary" id="editStudentBtn">
+                            <i data-lucide="pencil"></i><span>Edit</span>
+                        </button>
+                        <button type="button" class="btn btn-danger" id="deleteStudentBtn">
+                            <i data-lucide="trash-2"></i><span>Delete</span>
+                        </button>
+                    </div>
+                </div>
+
+                <section class="card card-pad" id="detailContainer" aria-live="polite">
+                    <div class="skeleton skeleton-row"></div>
+                    <div class="skeleton skeleton-row"></div>
+                    <div class="skeleton skeleton-row"></div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <script src="/vendor/lucide.min.js"></script>
+    <script src="/js/app.js"></script>
+    <script>
+        const studentId = new URLSearchParams(window.location.search).get('id');
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            document.getElementById('printProfileBtn').addEventListener('click', () => window.print());
+
+            if (!studentId) {
+                Toast.error('Missing ID', 'No student ID was provided.');
+                setTimeout(() => window.location.href = '/pages/students.html', 1200);
+                return;
+            }
+            try {
+                const { data: s } = await API.getStudentById(studentId);
+                renderStudent(s);
+            } catch (err) {
+                document.getElementById('detailContainer').innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon"><i data-lucide="user-x"></i></div>
+                        <h3>Student record not found</h3>
+                        <p>${Utils.escapeHtml(err.data?.message || 'Unable to load the requested student profile.')}</p>
+                        <a href="/pages/students.html" class="btn btn-primary btn-sm">Return to All Students</a>
+                    </div>`;
+                lucide.createIcons();
+            }
+        });
+
+        function renderStudent(s) {
+            document.getElementById('studentNameHeading').textContent = s.fullName;
+            document.getElementById('studentCodeSub').textContent = `${s.studentCode} • ${s.department}`;
+            document.getElementById('editStudentBtn').onclick = () => window.location.href = `/pages/edit-student.html?id=${s.id}`;
+            document.getElementById('deleteStudentBtn').onclick = () => {
+                Modal.confirm(
+                    'Delete student record',
+                    `Permanently delete <strong>${Utils.escapeHtml(s.fullName)}</strong> (${Utils.escapeHtml(s.studentCode)})?`,
+                    async () => {
+                        try {
+                            await API.deleteStudent(s.id);
+                            Toast.success('Student deleted', `${s.fullName} was removed.`);
+                            setTimeout(() => window.location.href = '/pages/students.html', 600);
+                        } catch (e) {
+                            Toast.error('Delete failed', e.data?.message || 'Failed to delete student.');
+                        }
+                    }
+                );
+            };
+
+            const item = (label, value) => `
+                <div class="detail-item">
+                    <div class="detail-label">${label}</div>
+                    <div class="detail-value">${value}</div>
+                </div>`;
+
+            document.getElementById('detailContainer').innerHTML = `
+                <div class="profile-head">
+                    <span class="avatar avatar-lg">${Utils.escapeHtml(Utils.getInitials(s.fullName))}</span>
+                    <div class="grow">
+                        <h2>${Utils.escapeHtml(s.fullName)}</h2>
+                        <p>${Utils.escapeHtml(s.email)} &bull; ${Utils.escapeHtml(s.studentCode)}</p>
+                    </div>
+                    <div class="profile-badges">
+                        <span class="grade-badge grade-lg ${GradeUtil.getBadgeClass(s.grade)}">Grade ${Utils.escapeHtml(s.grade)}</span>
+                        <span class="status-badge lg ${GradeUtil.getStatusClass(s.result)}"><span class="status-dot"></span>${Utils.escapeHtml(s.result)}</span>
+                    </div>
+                </div>
+
+                <h3 class="detail-section-title">Personal Information</h3>
+                <div class="detail-grid">
+                    ${item('Full Name', Utils.escapeHtml(s.fullName))}
+                    ${item('Email Address', Utils.escapeHtml(s.email))}
+                    ${item('Phone Number', Utils.escapeHtml(s.phone || '—'))}
+                    ${item('Gender', Utils.escapeHtml(s.gender))}
+                    ${item('Date of Birth', Utils.escapeHtml(Utils.formatDate(s.dateOfBirth)))}
+                    ${item('Address', Utils.escapeHtml(s.address || '—'))}
+                </div>
+
+                <h3 class="detail-section-title">Academic Performance</h3>
+                <div class="detail-grid mb-0">
+                    ${item('Student ID', Utils.escapeHtml(s.studentCode))}
+                    ${item('Department', Utils.escapeHtml(s.department))}
+                    ${item('Course', Utils.escapeHtml(s.course))}
+                    ${item('Year of Study', s.yearOfStudy ? `Year ${s.yearOfStudy}` : '—')}
+                    ${item('Semester', Utils.escapeHtml(s.semester || '—'))}
+                    ${item('Marks Obtained', `${s.marks} / 100`)}
+                    ${item('Calculated Grade', `<span class="grade-badge ${GradeUtil.getBadgeClass(s.grade)}">${Utils.escapeHtml(s.grade)}</span>`)}
+                    ${item('Academic Result', `<span class="status-badge ${GradeUtil.getStatusClass(s.result)}"><span class="status-dot"></span>${Utils.escapeHtml(s.result)}</span>`)}
+                    ${item('Enrolled On', Utils.escapeHtml(Utils.formatDateTime(s.createdAt)))}
+                    ${item('Last Updated', Utils.escapeHtml(Utils.formatDateTime(s.updatedAt)))}
+                </div>
+            `;
+            lucide.createIcons();
+        }
+    </script>
+</body>
+</html>

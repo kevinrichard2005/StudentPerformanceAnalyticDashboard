@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="StudentMS Dashboard — real-time cohort metrics, grade distribution, enrollment trends, and recent academic activity.">
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#F7F8FA">
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0B0D12">
+    <title>Dashboard — StudentMS</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%234F46E5'/%3E%3Cpath d='M16 7 4 13l12 6 10-5v7h2v-8L16 7zm-7 9.5v4.5c0 2.5 3.1 4.5 7 4.5s7-2 7-4.5v-4.5l-7 3.5-7-3.5z' fill='%23FFFFFF'/%3E%3C/svg%3E">
+    <script>
+        (function () {
+            try {
+                var s = localStorage.getItem('sms_theme');
+                var t = (s === 'light' || s === 'dark') ? s : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+                document.documentElement.setAttribute('data-theme', t);
+            } catch (e) {}
+        })();
+    </script>
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+    <a href="#mainContent" class="skip-link">Skip to main content</a>
+    <div class="app-container">
+        <aside class="sidebar" id="sidebar" aria-label="Primary navigation"></aside>
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+        <div class="main-wrapper">
+            <header class="header"></header>
+
+            <main class="main-content" id="mainContent">
+                <div class="page-header">
+                    <div>
+                        <h1 class="page-title" id="dashboardGreeting">Academic Overview</h1>
+                        <p class="page-subtitle" id="dashboardSubtitle">Live cohort performance, grading breakdown, and enrollment activity</p>
+                    </div>
+                    <div class="page-actions">
+                        <button type="button" class="btn btn-ghost" id="dashExportBtn">
+                            <i data-lucide="download"></i><span>Export CSV</span>
+                        </button>
+                        <a href="/pages/add-student.html" class="btn btn-primary" data-page="add-student.html">
+                            <i data-lucide="plus"></i><span>Add Student</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Role-Specific Portal Banner (populated for Student / Teacher) -->
+                <section id="rolePortalBanner" aria-label="Role portal summary" hidden></section>
+
+                <!-- Neutral Stat Cards with Context / Trend Delta -->
+                <section class="stats-grid" aria-label="Key academic metrics">
+                    <article class="stat-card">
+                        <div class="stat-top">
+                            <span class="stat-label">Total Students</span>
+                            <span class="stat-icon" aria-hidden="true"><i data-lucide="users"></i></span>
+                        </div>
+                        <div class="stat-value" id="totalStudents"><span class="skeleton skeleton-text"></span></div>
+                        <div class="stat-meta" id="totalStudentsMeta">Active directory records</div>
+                    </article>
+
+                    <article class="stat-card">
+                        <div class="stat-top">
+                            <span class="stat-label">Male Students</span>
+                            <span class="stat-icon" aria-hidden="true"><i data-lucide="user"></i></span>
+                        </div>
+                        <div class="stat-value" id="maleStudents"><span class="skeleton skeleton-text"></span></div>
+                        <div class="stat-meta" id="maleStudentsMeta">Cohort share</div>
+                    </article>
+
+                    <article class="stat-card">
+                        <div class="stat-top">
+                            <span class="stat-label">Female Students</span>
+                            <span class="stat-icon" aria-hidden="true"><i data-lucide="user"></i></span>
+                        </div>
+                        <div class="stat-value" id="femaleStudents"><span class="skeleton skeleton-text"></span></div>
+                        <div class="stat-meta" id="femaleStudentsMeta">Cohort share</div>
+                    </article>
+
+                    <article class="stat-card">
+                        <div class="stat-top">
+                            <span class="stat-label">Average Marks</span>
+                            <span class="stat-icon" aria-hidden="true"><i data-lucide="trending-up"></i></span>
+                        </div>
+                        <div class="stat-value" id="averageMarks"><span class="skeleton skeleton-text"></span></div>
+                        <div class="stat-meta" id="averageMarksMeta">Out of 100.0</div>
+                    </article>
+
+                    <article class="stat-card">
+                        <div class="stat-top">
+                            <span class="stat-label">Passed</span>
+                            <span class="stat-icon" aria-hidden="true"><i data-lucide="check-circle-2"></i></span>
+                        </div>
+                        <div class="stat-value" id="passedStudents"><span class="skeleton skeleton-text"></span></div>
+                        <div class="stat-meta" id="passedStudentsMeta">Marks &ge; 40</div>
+                    </article>
+
+                    <article class="stat-card">
+                        <div class="stat-top">
+                            <span class="stat-label">Failed</span>
+                            <span class="stat-icon" aria-hidden="true"><i data-lucide="alert-circle"></i></span>
+                        </div>
+                        <div class="stat-value" id="failedStudents"><span class="skeleton skeleton-text"></span></div>
+                        <div class="stat-meta" id="failedStudentsMeta">Marks &lt; 40</div>
+                    </article>
+                </section>
+
+                <!-- Primary Charts -->
+                <section class="charts-grid" aria-label="Distribution charts">
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <div>
+                                <h2 class="chart-title">Grade Distribution</h2>
+                                <p class="card-desc">Student count across the 7 grading bands</p>
+                            </div>
+                            <a href="/pages/analytics.html" class="btn btn-ghost btn-sm">Full report</a>
+                        </div>
+                        <div class="chart-body">
+                            <div class="chart-container">
+                                <canvas id="gradeChart" aria-label="Grade distribution bar chart" role="img"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <div>
+                                <h2 class="chart-title">Gender Distribution</h2>
+                                <p class="card-desc">Demographic breakdown of enrolled students</p>
+                            </div>
+                        </div>
+                        <div class="chart-body">
+                            <div class="chart-container">
+                                <canvas id="genderChart" aria-label="Gender distribution doughnut chart" role="img"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Enrollment Overview -->
+                <section class="chart-card section-gap" aria-label="Enrollment timeline">
+                    <div class="chart-header">
+                        <div>
+                            <h2 class="chart-title">Student Enrollment Overview</h2>
+                            <p class="card-desc">Monthly additions to the student directory</p>
+                        </div>
+                        <span class="pagination-info" id="passRateLabel"></span>
+                    </div>
+                    <div class="chart-body">
+                        <div class="chart-container short">
+                            <canvas id="enrollmentChart" aria-label="Monthly enrollment line chart" role="img"></canvas>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Recent Students & Activity / Quick Actions -->
+                <section class="two-col" aria-label="Recent records and actions">
+                    <div class="card card-flush">
+                        <div class="card-header">
+                            <div>
+                                <h2 class="card-title">Recent Students</h2>
+                                <p class="card-desc">Latest 5 enrollments in the directory</p>
+                            </div>
+                            <a href="/pages/students.html" class="btn btn-ghost btn-sm">View all</a>
+                        </div>
+                        <div id="recentStudentsList" class="recent-list">
+                            <div class="skeleton skeleton-row"></div>
+                            <div class="skeleton skeleton-row"></div>
+                            <div class="skeleton skeleton-row"></div>
+                        </div>
+                    </div>
+
+                    <div class="card card-flush">
+                        <div class="card-header">
+                            <div>
+                                <h2 class="card-title">Recent Activities</h2>
+                                <p class="card-desc">Latest enrollment and record updates</p>
+                            </div>
+                        </div>
+                        <div id="recentActivities" class="recent-list">
+                            <div class="skeleton skeleton-row"></div>
+                            <div class="skeleton skeleton-row"></div>
+                        </div>
+                        <div class="card-header">
+                            <h2 class="card-title">Quick Actions</h2>
+                        </div>
+                        <div class="quick-actions">
+                            <button type="button" class="quick-action-btn" data-page="/pages/add-student.html">
+                                <i data-lucide="user-plus"></i><span>Add Student</span>
+                            </button>
+                            <button type="button" class="quick-action-btn" data-page="/pages/students.html">
+                                <i data-lucide="users"></i><span>All Students</span>
+                            </button>
+                            <button type="button" class="quick-action-btn" data-page="/pages/analytics.html">
+                                <i data-lucide="bar-chart-3"></i><span>Analytics</span>
+                            </button>
+                            <button type="button" class="quick-action-btn" id="quickExportBtn">
+                                <i data-lucide="download"></i><span>Export CSV</span>
+                            </button>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <script src="/vendor/lucide.min.js"></script>
+    <script src="/vendor/chart.umd.js"></script>
+    <script src="/js/app.js"></script>
+    <script>
+        let cachedStats = null;
+        let chartInstances = {};
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('dashExportBtn').addEventListener('click', () => Utils.exportStudentsCsv());
+            document.getElementById('quickExportBtn').addEventListener('click', () => Utils.exportStudentsCsv());
+
+            document.querySelectorAll('.quick-action-btn[data-page]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const page = btn.dataset.page;
+                    if (page) window.location.href = page;
+                });
+            });
+
+            window.addEventListener('sms:themechange', () => {
+                if (cachedStats) renderDashboardCharts(cachedStats);
+            });
+
+            loadDashboard();
+        });
+
+        async function loadDashboard() {
+            const currentUser = Auth.getUser();
+            if (currentUser) {
+                const display = localStorage.getItem('sms_adminName') || currentUser.fullName;
+                document.getElementById('dashboardGreeting').textContent = `Welcome back, ${display}`;
+                loadRoleBanner(currentUser);
+            }
+
+            try {
+                const [statsRes, recentRes] = await Promise.all([
+                    API.getStats(),
+                    API.getRecentStudents()
+                ]);
+                const stats = statsRes.data || {};
+                const recent = recentRes.data || [];
+                cachedStats = stats;
+
+                renderStatCards(stats);
+                renderDashboardCharts(stats);
+                renderRecentLists(recent);
+                lucide.createIcons();
+            } catch (err) {
+                Toast.error('Dashboard error', err.data?.message || 'Unable to load dashboard metrics.');
+            }
+        }
+
+        function renderStatCards(stats) {
+            const total = stats.totalStudents ?? 0;
+            const male = stats.maleStudents ?? 0;
+            const female = stats.femaleStudents ?? 0;
+            const avg = stats.averageMarks ?? 0;
+            const passed = stats.passedStudents ?? 0;
+            const failed = stats.failedStudents ?? 0;
+            const passPct = stats.passPercentage ?? 0;
+
+            document.getElementById('totalStudents').textContent = total;
+            document.getElementById('maleStudents').textContent = male;
+            document.getElementById('femaleStudents').textContent = female;
+            document.getElementById('averageMarks').textContent = avg;
+            document.getElementById('passedStudents').textContent = passed;
+            document.getElementById('failedStudents').textContent = failed;
+
+            const trendEntries = Object.entries(stats.enrollmentTrend || {});
+            if (trendEntries.length > 0) {
+                const [latestMonth, latestCount] = trendEntries[trendEntries.length - 1];
+                document.getElementById('totalStudentsMeta').innerHTML = `<span class="up">+${latestCount}</span> in ${Utils.escapeHtml(latestMonth)}`;
+            } else {
+                document.getElementById('totalStudentsMeta').textContent = 'No enrollments yet';
+            }
+
+            const malePct = total > 0 ? Math.round((male / total) * 100) : 0;
+            const femalePct = total > 0 ? Math.round((female / total) * 100) : 0;
+            document.getElementById('maleStudentsMeta').textContent = `${malePct}% of total cohort`;
+            document.getElementById('femaleStudentsMeta').textContent = `${femalePct}% of total cohort`;
+
+            const avgGrade = GradeUtil.calculate(avg);
+            document.getElementById('averageMarksMeta').textContent = total > 0
+                ? `Cohort band: ${avgGrade.grade} (${avgGrade.result})`
+                : 'Out of 100.0';
+
+            document.getElementById('passedStudentsMeta').innerHTML = `<span class="up">${passPct}%</span> pass rate`;
+            const failPct = total > 0 ? Math.round((failed / total) * 1000) / 10 : 0;
+            document.getElementById('failedStudentsMeta').innerHTML = failed > 0
+                ? `<span class="down">${failPct}%</span> require intervention`
+                : 'Zero failing records';
+
+            document.getElementById('passRateLabel').textContent = `Pass rate: ${passPct}%`;
+        }
+
+        function destroyChart(key) {
+            if (chartInstances[key]) {
+                chartInstances[key].destroy();
+                delete chartInstances[key];
+            }
+        }
+
+        function renderDashboardCharts(stats) {
+            if (typeof Chart === 'undefined') return;
+            ChartTheme.applyDefaults();
+            const t = ChartTheme.tokens();
+
+            // 1. Grade Distribution
+            destroyChart('grade');
+            const gradeLabels = Object.keys(stats.gradeDistribution || {});
+            const gradeData = Object.values(stats.gradeDistribution || {});
+            const gradeColors = gradeLabels.map(g => {
+                if (g === 'O' || g === 'A+') return t.success;
+                if (g === 'C') return t.warning;
+                if (g === 'F') return t.danger;
+                return t.c1;
+            });
+            chartInstances.grade = new Chart(document.getElementById('gradeChart'), {
+                type: 'bar',
+                data: {
+                    labels: gradeLabels,
+                    datasets: [{
+                        label: 'Students',
+                        data: gradeData,
+                        backgroundColor: gradeColors,
+                        borderRadius: 6,
+                        borderSkipped: false,
+                        maxBarThickness: 38
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { ticks: { color: t.muted }, grid: { display: false } },
+                        y: { beginAtZero: true, ticks: { color: t.muted, precision: 0 }, grid: { color: t.grid } }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+
+            // 2. Gender Distribution
+            destroyChart('gender');
+            const genderLabels = Object.keys(stats.genderDistribution || {});
+            const genderData = Object.values(stats.genderDistribution || {});
+            chartInstances.gender = new Chart(document.getElementById('genderChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: genderLabels,
+                    datasets: [{
+                        data: genderData,
+                        backgroundColor: [t.c1, t.c3, t.c5],
+                        borderColor: t.surface,
+                        borderWidth: 2,
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '66%',
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { color: t.muted, padding: 16, usePointStyle: true }
+                        }
+                    }
+                }
+            });
+
+            // 3. Enrollment Trend
+            destroyChart('enrollment');
+            const trend = stats.enrollmentTrend || {};
+            chartInstances.enrollment = new Chart(document.getElementById('enrollmentChart'), {
+                type: 'line',
+                data: {
+                    labels: Object.keys(trend),
+                    datasets: [{
+                        label: 'New students',
+                        data: Object.values(trend),
+                        borderColor: t.c1,
+                        backgroundColor: t.c4,
+                        fill: false,
+                        tension: 0.3,
+                        pointRadius: 4,
+                        pointBackgroundColor: t.c1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { ticks: { color: t.muted }, grid: { display: false } },
+                        y: { beginAtZero: true, ticks: { color: t.muted, precision: 0 }, grid: { color: t.grid } }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+
+        function renderRecentLists(recent) {
+            const list = document.getElementById('recentStudentsList');
+            const activities = document.getElementById('recentActivities');
+
+            if (recent.length > 0) {
+                list.innerHTML = recent.map(s => `
+                    <a href="/pages/student-details.html?id=${s.id}" class="list-item">
+                        <span class="avatar avatar-sm">${Utils.escapeHtml(Utils.getInitials(s.fullName))}</span>
+                        <span class="grow">
+                            <span class="person-name">${Utils.escapeHtml(s.fullName)}</span>
+                            <span class="person-sub">${Utils.escapeHtml(s.department)} &bull; ${Utils.escapeHtml(s.studentCode)}</span>
+                        </span>
+                        <span class="grade-badge ${GradeUtil.getBadgeClass(s.grade)}">${Utils.escapeHtml(s.grade)}</span>
+                    </a>
+                `).join('');
+
+                activities.innerHTML = recent.slice(0, 4).map(s => {
+                    const updated = s.updatedAt && s.createdAt && s.updatedAt !== s.createdAt;
+                    return `
+                        <div class="list-item">
+                            <span class="activity-icon ${updated ? 'is-warning' : 'is-success'}">
+                                <i data-lucide="${updated ? 'pencil' : 'user-plus'}"></i>
+                            </span>
+                            <div class="grow">
+                                <div class="person-name">${Utils.escapeHtml(s.fullName)} ${updated ? 'record updated' : 'enrolled'}</div>
+                                <div class="person-sub">${Utils.escapeHtml(Utils.formatDateTime(updated ? s.updatedAt : s.createdAt))}</div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } else {
+                list.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon"><i data-lucide="users"></i></div>
+                        <h3>No students enrolled yet</h3>
+                        <p>Add your first student record to populate the directory and analytics.</p>
+                        <a href="/pages/add-student.html" class="btn btn-primary btn-sm" data-page="add-student.html">Add Student</a>
+                    </div>
+                `;
+                activities.innerHTML = `<div class="empty-state"><p>No recent activity recorded.</p></div>`;
+            }
+        }
+
+        async function loadRoleBanner(user) {
+            const banner = document.getElementById('rolePortalBanner');
+            if (!banner) return;
+
+            if (user.role === 'STUDENT') {
+                try {
+                    const res = await API.getMyStudentProfile();
+                    const s = res.data;
+                    banner.hidden = false;
+                    banner.className = 'portal-banner';
+                    banner.innerHTML = `
+                        <div class="person">
+                            <span class="avatar">${Utils.escapeHtml(Utils.getInitials(s.fullName))}</span>
+                            <div class="person-text">
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <span class="role-badge role-student">Student Portal</span>
+                                    <span class="text-brand tabular">${Utils.escapeHtml(s.studentCode)}</span>
+                                </div>
+                                <h2>${Utils.escapeHtml(s.fullName)}</h2>
+                                <p>${Utils.escapeHtml(s.department)} &bull; ${Utils.escapeHtml(s.course)} &bull; Semester ${Utils.escapeHtml(s.semester || '1st')}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-4 flex-wrap">
+                            <div class="portal-score">
+                                <strong>${s.marks}/100</strong>
+                                <span class="grade-badge ${GradeUtil.getBadgeClass(s.grade)}">${Utils.escapeHtml(s.grade)}</span>
+                                <span class="status-badge ${GradeUtil.getStatusClass(s.result)}"><span class="status-dot"></span>${Utils.escapeHtml(s.result)}</span>
+                            </div>
+                            <a href="/pages/student-details.html?id=${s.id}" class="btn btn-primary btn-sm">
+                                <i data-lucide="file-text"></i><span>My Transcript</span>
+                            </a>
+                        </div>
+                    `;
+                    lucide.createIcons();
+                } catch (e) { /* no linked student profile */ }
+            } else if (user.role === 'TEACHER') {
+                banner.hidden = false;
+                banner.className = 'portal-banner';
+                banner.innerHTML = `
+                    <div>
+                        <span class="role-badge role-teacher">Faculty Workspace</span>
+                        <h2>${Utils.escapeHtml(user.fullName)} &bull; ${Utils.escapeHtml(user.department || 'Faculty')}</h2>
+                        <p>Register new students, update academic marks, and review cohort pass rates.</p>
+                    </div>
+                    <div class="flex gap-2 flex-wrap">
+                        <a href="/pages/add-student.html" class="btn btn-primary btn-sm"><i data-lucide="user-plus"></i><span>Add Student</span></a>
+                        <a href="/pages/students.html" class="btn btn-ghost btn-sm"><i data-lucide="users"></i><span>Manage Marks</span></a>
+                    </div>
+                `;
+                lucide.createIcons();
+            }
+        }
+    </script>
+</body>
+</html>

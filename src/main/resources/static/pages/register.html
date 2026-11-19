@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Create a Student, Teacher, or Administrator account in the StudentMS academic management workspace.">
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#F7F8FA">
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0B0D12">
+    <title>Create Account — StudentMS</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%234F46E5'/%3E%3Cpath d='M16 7 4 13l12 6 10-5v7h2v-8L16 7zm-7 9.5v4.5c0 2.5 3.1 4.5 7 4.5s7-2 7-4.5v-4.5l-7 3.5-7-3.5z' fill='%23FFFFFF'/%3E%3C/svg%3E">
+    <script>
+        (function () {
+            try {
+                var s = localStorage.getItem('sms_theme');
+                var t = (s === 'light' || s === 'dark') ? s : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+                document.documentElement.setAttribute('data-theme', t);
+            } catch (e) {}
+        })();
+    </script>
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+    <a href="#registerForm" class="skip-link">Skip to registration form</a>
+    <div class="auth-layout">
+        <aside class="auth-brand-panel" aria-label="Product overview">
+            <div class="auth-logo">
+                <span class="sidebar-logo" aria-hidden="true"><i data-lucide="graduation-cap"></i></span>
+                <span>StudentMS</span>
+            </div>
+            <div class="auth-pitch">
+                <h2>One workspace tailored to every academic role.</h2>
+                <p>Select your role to unlock the right views — from personal transcripts to full cohort administration.</p>
+                <ul class="auth-points">
+                    <li><i data-lucide="graduation-cap"></i><span><strong>Students</strong> get an automatic Student ID and live grade card</span></li>
+                    <li><i data-lucide="book-open"></i><span><strong>Teachers</strong> enroll students, record marks, and track pass rates</span></li>
+                    <li><i data-lucide="shield-check"></i><span><strong>Admins</strong> manage directory lifecycle and portal accounts</span></li>
+                </ul>
+            </div>
+            <div class="auth-fineprint">Student Management System &bull; Spring Boot &amp; MySQL</div>
+        </aside>
+
+        <main class="auth-form-panel">
+            <div class="auth-theme">
+                <button type="button" class="icon-btn" id="themeToggleBtn" data-theme-toggle aria-label="Toggle color theme">
+                    <i data-lucide="moon"></i>
+                </button>
+            </div>
+
+            <div class="auth-card wide">
+                <div class="auth-mobile-logo">
+                    <span class="sidebar-logo" aria-hidden="true"><i data-lucide="graduation-cap"></i></span>
+                    <span>StudentMS</span>
+                </div>
+
+                <div class="auth-head">
+                    <h1>Create your account</h1>
+                    <p>Choose your role and complete your profile details below.</p>
+                </div>
+
+                <div class="role-cards-grid" role="radiogroup" aria-label="Choose your account role">
+                    <div class="role-select-card student active" data-role="STUDENT" tabindex="0" role="radio" aria-checked="true">
+                        <div class="role-icon"><i data-lucide="graduation-cap"></i></div>
+                        <div class="role-title">Student</div>
+                        <div class="role-desc">View academic record, grades &amp; analytics</div>
+                    </div>
+                    <div class="role-select-card teacher" data-role="TEACHER" tabindex="0" role="radio" aria-checked="false">
+                        <div class="role-icon"><i data-lucide="book-open"></i></div>
+                        <div class="role-title">Teacher</div>
+                        <div class="role-desc">Enroll students, update marks &amp; grades</div>
+                    </div>
+                    <div class="role-select-card admin" data-role="ADMIN" tabindex="0" role="radio" aria-checked="false">
+                        <div class="role-icon"><i data-lucide="shield-check"></i></div>
+                        <div class="role-title">Admin</div>
+                        <div class="role-desc">Full directory &amp; user account control</div>
+                    </div>
+                </div>
+
+                <form id="registerForm" novalidate>
+                    <input type="hidden" name="role" id="regRole" value="STUDENT">
+
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label" for="regFullName">Full name <span class="required">*</span></label>
+                            <input type="text" class="form-control" id="regFullName" name="fullName" required
+                                   placeholder="Enter your full name" autocomplete="name">
+                            <div class="form-error"></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="regEmail">Email address <span class="required">*</span></label>
+                            <input type="email" class="form-control" id="regEmail" name="email" required
+                                   placeholder="name@university.edu" autocomplete="email">
+                            <div class="form-error"></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="regPassword">Password <span class="required">*</span></label>
+                            <input type="password" class="form-control" id="regPassword" name="password" required
+                                   minlength="6" placeholder="At least 6 characters" autocomplete="new-password">
+                            <div class="form-error"></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="regConfirmPassword">Confirm password <span class="required">*</span></label>
+                            <input type="password" class="form-control" id="regConfirmPassword" name="confirmPassword" required
+                                   placeholder="Repeat your password" autocomplete="new-password">
+                            <div class="form-error"></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="regDepartment">Department <span class="required">*</span></label>
+                            <select class="form-control" id="regDepartment" name="department" required>
+                                <option value="Computer Science">Computer Science</option>
+                                <option value="Electronics">Electronics</option>
+                                <option value="Mechanical">Mechanical</option>
+                                <option value="Civil">Civil</option>
+                                <option value="Mathematics">Mathematics</option>
+                                <option value="Physics">Physics</option>
+                                <option value="Chemistry">Chemistry</option>
+                                <option value="Biology">Biology</option>
+                                <option value="Business">Business</option>
+                                <option value="Arts">Arts</option>
+                            </select>
+                            <div class="form-error"></div>
+                        </div>
+
+                        <div class="form-group" id="genderGroup">
+                            <label class="form-label" for="regGender">Gender</label>
+                            <select class="form-control" id="regGender" name="gender">
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-grid" id="studentAcademicFields">
+                        <div class="form-group">
+                            <label class="form-label" for="regCourse">Course / program</label>
+                            <input type="text" class="form-control" id="regCourse" name="course" placeholder="e.g. B.Tech CS" value="B.Tech CS">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="regSemester">Current semester</label>
+                            <select class="form-control" id="regSemester" name="semester">
+                                <option value="1st">1st Semester</option>
+                                <option value="2nd">2nd Semester</option>
+                                <option value="3rd">3rd Semester</option>
+                                <option value="4th">4th Semester</option>
+                                <option value="5th">5th Semester</option>
+                                <option value="6th">6th Semester</option>
+                                <option value="7th">7th Semester</option>
+                                <option value="8th">8th Semester</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-block" id="registerSubmitBtn">
+                        <i data-lucide="user-check"></i><span>Create Account</span>
+                    </button>
+                </form>
+
+                <details class="demo-details">
+                    <summary>
+                        <span>Demo mode (use existing test accounts)</span>
+                        <i data-lucide="chevron-down"></i>
+                    </summary>
+                    <div class="demo-body">
+                        <p>Want to test immediately without creating an account? Jump to sign-in demo mode.</p>
+                        <a href="/pages/login.html" class="btn btn-ghost btn-sm btn-block">Go to Demo Sign In</a>
+                    </div>
+                </details>
+
+                <div class="auth-footer">
+                    Already have an account? <a href="/pages/login.html">Sign in</a>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="/vendor/lucide.min.js"></script>
+    <script src="/js/app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if (Auth.isLoggedIn()) {
+                window.location.href = '/index.html';
+                return;
+            }
+
+            const themeBtn = document.getElementById('themeToggleBtn');
+            if (themeBtn) themeBtn.addEventListener('click', () => Theme.toggle());
+
+            const roleCards = document.querySelectorAll('.role-select-card');
+            const roleInput = document.getElementById('regRole');
+            const studentFields = document.getElementById('studentAcademicFields');
+            const genderGroup = document.getElementById('genderGroup');
+
+            function selectRole(role) {
+                roleInput.value = role;
+                roleCards.forEach(c => {
+                    const active = c.dataset.role === role;
+                    c.classList.toggle('active', active);
+                    c.setAttribute('aria-checked', active ? 'true' : 'false');
+                });
+                const isStudent = role === 'STUDENT';
+                studentFields.hidden = !isStudent;
+                genderGroup.hidden = !isStudent;
+            }
+
+            roleCards.forEach(card => {
+                card.addEventListener('click', () => selectRole(card.dataset.role));
+                card.addEventListener('keydown', e => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        selectRole(card.dataset.role);
+                    }
+                });
+            });
+
+            const fullName = document.getElementById('regFullName');
+            const email = document.getElementById('regEmail');
+            const password = document.getElementById('regPassword');
+            const confirm = document.getElementById('regConfirmPassword');
+
+            [fullName, email].forEach(el => el.addEventListener('blur', () => FormValidator.validateField(el)));
+            password.addEventListener('blur', () => {
+                if (password.value.length < 6) {
+                    FormValidator.showFieldError(password, 'Password must be at least 6 characters');
+                } else {
+                    FormValidator.showFieldError(password, '');
+                }
+            });
+            confirm.addEventListener('blur', () => {
+                if (!confirm.value || confirm.value !== password.value) {
+                    FormValidator.showFieldError(confirm, 'Passwords do not match');
+                } else {
+                    FormValidator.showFieldError(confirm, '');
+                }
+            });
+
+            document.getElementById('registerForm').addEventListener('submit', async e => {
+                e.preventDefault();
+                let valid = FormValidator.validateField(fullName) & FormValidator.validateField(email);
+
+                if (password.value.length < 6) {
+                    FormValidator.showFieldError(password, 'Password must be at least 6 characters');
+                    valid = false;
+                } else {
+                    FormValidator.showFieldError(password, '');
+                }
+
+                if (!confirm.value || confirm.value !== password.value) {
+                    FormValidator.showFieldError(confirm, 'Passwords do not match');
+                    valid = false;
+                } else {
+                    FormValidator.showFieldError(confirm, '');
+                }
+
+                if (!valid) return;
+
+                const btn = document.getElementById('registerSubmitBtn');
+                btn.classList.add('loading');
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner" aria-hidden="true"></span><span>Creating account...</span>';
+
+                const payload = {
+                    fullName: fullName.value.trim(),
+                    email: email.value.trim(),
+                    password: password.value,
+                    role: roleInput.value,
+                    department: document.getElementById('regDepartment').value,
+                    gender: document.getElementById('regGender').value,
+                    course: document.getElementById('regCourse').value.trim(),
+                    semester: document.getElementById('regSemester').value
+                };
+
+                try {
+                    const res = await API.register(payload);
+                    Auth.setSession(res.data);
+                    Toast.success('Account created', `Signed in as ${res.data.user.role}`);
+                    setTimeout(() => window.location.href = '/index.html', 400);
+                } catch (err) {
+                    if (err.data && err.data.data && typeof err.data.data === 'object') {
+                        Object.entries(err.data.data).forEach(([field, msg]) => {
+                            const input = e.target.querySelector(`[name="${field}"]`);
+                            if (input) FormValidator.showFieldError(input, msg);
+                        });
+                    }
+                    Toast.error('Registration failed', err.data?.message || 'Unable to register account');
+                } finally {
+                    btn.classList.remove('loading');
+                    btn.disabled = false;
+                    btn.innerHTML = '<i data-lucide="user-check"></i><span>Create Account</span>';
+                    lucide.createIcons();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

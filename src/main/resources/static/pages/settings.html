@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="StudentMS Settings — workspace display preferences, color theme, API health status, user accounts, and grading scale reference.">
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#F7F8FA">
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0B0D12">
+    <title>Settings — StudentMS</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%234F46E5'/%3E%3Cpath d='M16 7 4 13l12 6 10-5v7h2v-8L16 7zm-7 9.5v4.5c0 2.5 3.1 4.5 7 4.5s7-2 7-4.5v-4.5l-7 3.5-7-3.5z' fill='%23FFFFFF'/%3E%3C/svg%3E">
+    <script>
+        (function () {
+            try {
+                var s = localStorage.getItem('sms_theme');
+                var t = (s === 'light' || s === 'dark') ? s : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+                document.documentElement.setAttribute('data-theme', t);
+            } catch (e) {}
+        })();
+    </script>
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+    <a href="#mainContent" class="skip-link">Skip to settings</a>
+    <div class="app-container">
+        <aside class="sidebar" id="sidebar" aria-label="Primary navigation"></aside>
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+        <div class="main-wrapper">
+            <header class="header"></header>
+
+            <main class="main-content" id="mainContent">
+                <div class="page-header">
+                    <div>
+                        <h1 class="page-title">Workspace Settings</h1>
+                        <p class="page-subtitle">Configure display defaults, color theme, and inspect backend service health</p>
+                    </div>
+                </div>
+
+                <div class="two-col">
+                    <section class="card card-flush" aria-labelledby="prefsHeading">
+                        <div class="card-header">
+                            <div>
+                                <h2 class="card-title" id="prefsHeading">Display Preferences</h2>
+                                <p class="card-desc">Saved locally in your browser for this workspace</p>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <form id="prefsForm">
+                                <div class="form-group">
+                                    <label class="form-label" for="prefTheme">Color theme</label>
+                                    <select class="form-control" id="prefTheme">
+                                        <option value="light">Light (default)</option>
+                                        <option value="dark">Dark</option>
+                                    </select>
+                                    <span class="form-hint">You can also toggle theme anytime from the header bar.</span>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label" for="prefPageSize">Default rows per page</label>
+                                    <select class="form-control" id="prefPageSize">
+                                        <option value="5">5 students</option>
+                                        <option value="10">10 students</option>
+                                        <option value="20">20 students</option>
+                                        <option value="50">50 students</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label" for="prefAdminName">Profile display name override</label>
+                                    <input type="text" class="form-control" id="prefAdminName" placeholder="Leave blank to use account name">
+                                </div>
+
+                                <div class="flex justify-end gap-2">
+                                    <button type="button" class="btn btn-ghost" id="resetPrefsBtn">Reset Defaults</button>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i data-lucide="save"></i><span>Save Preferences</span>
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </section>
+
+                    <section class="card card-flush" aria-labelledby="healthHeading">
+                        <div class="card-header">
+                            <div>
+                                <h2 class="card-title" id="healthHeading">Backend &amp; API Status</h2>
+                                <p class="card-desc">Live connection status to Spring Boot and MySQL</p>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="detail-grid single-col">
+                                <div class="detail-item">
+                                    <div class="detail-label">REST API Connection</div>
+                                    <div class="detail-value" id="apiHealthStatus">Checking...</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Records in Database</div>
+                                    <div class="detail-value" id="dbRecordCount">—</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Grading Source of Truth</div>
+                                    <div class="detail-value">Spring Boot Backend (GradeCalculator)</div>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-ghost" id="exportCsvBtn">
+                                <i data-lucide="download"></i><span>Export All Students (CSV)</span>
+                            </button>
+                        </div>
+                    </section>
+                </div>
+
+                <!-- Admin-Only Portal Accounts Table -->
+                <section class="card card-flush section-gap" id="adminUsersCard" aria-labelledby="usersHeading" hidden>
+                    <div class="card-header">
+                        <div>
+                            <h2 class="card-title" id="usersHeading">Registered Portal Accounts</h2>
+                            <p class="card-desc">All Student, Teacher, and Administrator accounts registered in the system</p>
+                        </div>
+                        <a href="/pages/register.html" id="registerAnotherAccountBtn" class="btn btn-ghost btn-sm">
+                            <i data-lucide="user-plus"></i><span>Register Account</span>
+                        </a>
+                    </div>
+                    <div class="table-wrapper">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>User</th>
+                                    <th>Role</th>
+                                    <th>Department</th>
+                                    <th>Linked Student ID</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usersTableBody"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Official Grading Scale Reference -->
+                <section class="card card-flush" aria-labelledby="scaleHeading">
+                    <div class="card-header">
+                        <div>
+                            <h2 class="card-title" id="scaleHeading">Official Grading Scale Reference</h2>
+                            <p class="card-desc">Enforced server-side whenever a student record is created or updated</p>
+                        </div>
+                    </div>
+                    <div class="table-wrapper">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Marks Range</th>
+                                    <th>Grade</th>
+                                    <th>Result</th>
+                                    <th>Pass / Fail Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td class="tabular">90–100</td><td><span class="grade-badge grade-o">O</span></td><td>Excellent</td><td><span class="status-badge pass"><span class="status-dot"></span>Pass</span></td></tr>
+                                <tr><td class="tabular">80–89</td><td><span class="grade-badge grade-a-plus">A+</span></td><td>Outstanding</td><td><span class="status-badge pass"><span class="status-dot"></span>Pass</span></td></tr>
+                                <tr><td class="tabular">70–79</td><td><span class="grade-badge grade-a">A</span></td><td>Very Good</td><td><span class="status-badge pass"><span class="status-dot"></span>Pass</span></td></tr>
+                                <tr><td class="tabular">60–69</td><td><span class="grade-badge grade-b-plus">B+</span></td><td>Good</td><td><span class="status-badge pass"><span class="status-dot"></span>Pass</span></td></tr>
+                                <tr><td class="tabular">50–59</td><td><span class="grade-badge grade-b">B</span></td><td>Average</td><td><span class="status-badge pass"><span class="status-dot"></span>Pass</span></td></tr>
+                                <tr><td class="tabular">40–49</td><td><span class="grade-badge grade-c">C</span></td><td>Pass</td><td><span class="status-badge pass"><span class="status-dot"></span>Pass</span></td></tr>
+                                <tr><td class="tabular">0–39</td><td><span class="grade-badge grade-f">F</span></td><td>Fail</td><td><span class="status-badge fail"><span class="status-dot"></span>Fail</span></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <script src="/vendor/lucide.min.js"></script>
+    <script src="/js/app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const prefTheme = document.getElementById('prefTheme');
+            prefTheme.value = Theme.current();
+            window.addEventListener('sms:themechange', e => {
+                prefTheme.value = e.detail.theme;
+            });
+
+            document.getElementById('prefPageSize').value = localStorage.getItem('sms_pageSize') || '10';
+            document.getElementById('prefAdminName').value = localStorage.getItem('sms_adminName') || '';
+
+            const regBtn = document.getElementById('registerAnotherAccountBtn');
+            if (regBtn) {
+                regBtn.addEventListener('click', () => Auth.clearSession());
+            }
+
+            try {
+                const res = await API.getStats();
+                document.getElementById('apiHealthStatus').innerHTML = '<span class="status-badge pass"><span class="status-dot"></span>Connected</span>';
+                document.getElementById('dbRecordCount').textContent = `${res.data.totalStudents} students`;
+            } catch (err) {
+                document.getElementById('apiHealthStatus').innerHTML = '<span class="status-badge fail"><span class="status-dot"></span>Disconnected</span>';
+            }
+
+            document.getElementById('prefsForm').addEventListener('submit', e => {
+                e.preventDefault();
+                Theme.apply(prefTheme.value, true);
+                localStorage.setItem('sms_pageSize', document.getElementById('prefPageSize').value);
+                const customName = document.getElementById('prefAdminName').value.trim();
+                if (customName) {
+                    localStorage.setItem('sms_adminName', customName);
+                } else {
+                    localStorage.removeItem('sms_adminName');
+                }
+                Auth.applyRoleUI();
+                Toast.success('Preferences saved', 'Workspace display settings updated.');
+            });
+
+            document.getElementById('resetPrefsBtn').addEventListener('click', () => {
+                localStorage.removeItem('sms_pageSize');
+                localStorage.removeItem('sms_adminName');
+                Theme.apply('light', true);
+                document.getElementById('prefPageSize').value = '10';
+                document.getElementById('prefAdminName').value = '';
+                Auth.applyRoleUI();
+                Toast.info('Defaults restored', 'Preferences reset to defaults.');
+            });
+
+            document.getElementById('exportCsvBtn').addEventListener('click', () => Utils.exportStudentsCsv());
+
+            if (Auth.isAdmin()) {
+                try {
+                    const usersRes = await API.getAllUsers();
+                    const users = usersRes.data || [];
+                    document.getElementById('adminUsersCard').hidden = false;
+                    document.getElementById('usersTableBody').innerHTML = users.map(u => `
+                        <tr>
+                            <td>
+                                <div class="person">
+                                    <span class="avatar avatar-sm">${Utils.escapeHtml(Utils.getInitials(u.fullName))}</span>
+                                    <div class="person-text">
+                                        <div class="person-name">${Utils.escapeHtml(u.fullName)}</div>
+                                        <div class="person-sub">${Utils.escapeHtml(u.email)}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td><span class="role-badge role-${(u.role || 'student').toLowerCase()}">${Utils.escapeHtml(u.role)}</span></td>
+                            <td>${Utils.escapeHtml(u.department || '—')}</td>
+                            <td>${u.studentCode ? `<a href="/pages/student-details.html?id=${u.studentRecordId}" class="link tabular">${Utils.escapeHtml(u.studentCode)}</a>` : '—'}</td>
+                        </tr>
+                    `).join('');
+                    lucide.createIcons();
+                } catch (e) { /* ignore */ }
+            }
+        });
+    </script>
+</body>
+</html>

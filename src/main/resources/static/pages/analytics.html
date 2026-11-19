@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="StudentMS Analytics — cohort grade distribution, departmental enrollment, gender ratio, and pass/fail breakdown.">
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#F7F8FA">
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0B0D12">
+    <title>Analytics — StudentMS</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%234F46E5'/%3E%3Cpath d='M16 7 4 13l12 6 10-5v7h2v-8L16 7zm-7 9.5v4.5c0 2.5 3.1 4.5 7 4.5s7-2 7-4.5v-4.5l-7 3.5-7-3.5z' fill='%23FFFFFF'/%3E%3C/svg%3E">
+    <script>
+        (function () {
+            try {
+                var s = localStorage.getItem('sms_theme');
+                var t = (s === 'light' || s === 'dark') ? s : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+                document.documentElement.setAttribute('data-theme', t);
+            } catch (e) {}
+        })();
+    </script>
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+    <a href="#mainContent" class="skip-link">Skip to analytics</a>
+    <div class="app-container">
+        <aside class="sidebar" id="sidebar" aria-label="Primary navigation"></aside>
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+        <div class="main-wrapper">
+            <header class="header"></header>
+
+            <main class="main-content" id="mainContent">
+                <div class="page-header">
+                    <div>
+                        <h1 class="page-title">Academic Analytics</h1>
+                        <p class="page-subtitle">Cohort distribution across grades, departments, demographics, and pass thresholds</p>
+                    </div>
+                    <div class="page-actions">
+                        <button type="button" class="btn btn-ghost" id="analyticsExportBtn">
+                            <i data-lucide="download"></i><span>Export CSV</span>
+                        </button>
+                    </div>
+                </div>
+
+                <section class="stats-grid" aria-label="Summary indicators">
+                    <article class="stat-card">
+                        <div class="stat-top">
+                            <span class="stat-label">Total Students</span>
+                            <span class="stat-icon"><i data-lucide="users"></i></span>
+                        </div>
+                        <div class="stat-value" id="anTotalStudents"><span class="skeleton skeleton-text"></span></div>
+                        <div class="stat-meta">Enrolled cohort size</div>
+                    </article>
+
+                    <article class="stat-card">
+                        <div class="stat-top">
+                            <span class="stat-label">Class Average</span>
+                            <span class="stat-icon"><i data-lucide="trending-up"></i></span>
+                        </div>
+                        <div class="stat-value" id="anAvgMarks"><span class="skeleton skeleton-text"></span></div>
+                        <div class="stat-meta" id="anAvgMeta">Mean score out of 100</div>
+                    </article>
+
+                    <article class="stat-card">
+                        <div class="stat-top">
+                            <span class="stat-label">Pass Rate</span>
+                            <span class="stat-icon"><i data-lucide="check-circle-2"></i></span>
+                        </div>
+                        <div class="stat-value" id="anPassRate"><span class="skeleton skeleton-text"></span></div>
+                        <div class="stat-meta" id="anPassMeta">Marks &ge; 40</div>
+                    </article>
+
+                    <article class="stat-card">
+                        <div class="stat-top">
+                            <span class="stat-label">Failed</span>
+                            <span class="stat-icon"><i data-lucide="alert-circle"></i></span>
+                        </div>
+                        <div class="stat-value" id="anFailCount"><span class="skeleton skeleton-text"></span></div>
+                        <div class="stat-meta" id="anFailMeta">Marks &lt; 40</div>
+                    </article>
+                </section>
+
+                <section class="charts-grid" aria-label="Analytical charts">
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <div>
+                                <h2 class="chart-title">Grade Distribution</h2>
+                                <p class="card-desc">Count of students in each grade band</p>
+                            </div>
+                        </div>
+                        <div class="chart-body">
+                            <div class="chart-container"><canvas id="anGradeChart" aria-label="Grade distribution chart" role="img"></canvas></div>
+                        </div>
+                    </div>
+
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <div>
+                                <h2 class="chart-title">Department Enrollment</h2>
+                                <p class="card-desc">Active headcount by academic department</p>
+                            </div>
+                        </div>
+                        <div class="chart-body">
+                            <div class="chart-container"><canvas id="anDeptChart" aria-label="Department enrollment chart" role="img"></canvas></div>
+                        </div>
+                    </div>
+
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <div>
+                                <h2 class="chart-title">Gender Distribution</h2>
+                                <p class="card-desc">Demographic composition of the directory</p>
+                            </div>
+                        </div>
+                        <div class="chart-body">
+                            <div class="chart-container"><canvas id="anGenderChart" aria-label="Gender distribution chart" role="img"></canvas></div>
+                        </div>
+                    </div>
+
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <div>
+                                <h2 class="chart-title">Pass / Fail Ratio</h2>
+                                <p class="card-desc">Comparison against the 40-mark pass threshold</p>
+                            </div>
+                        </div>
+                        <div class="chart-body">
+                            <div class="chart-container"><canvas id="anPassFailChart" aria-label="Pass fail ratio chart" role="img"></canvas></div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="card card-flush" aria-label="Grade breakdown table">
+                    <div class="card-header">
+                        <div>
+                            <h2 class="card-title">Grade Band Breakdown</h2>
+                            <p class="card-desc">Official grading scale and cohort share per band</p>
+                        </div>
+                    </div>
+                    <div class="table-wrapper">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Grade</th>
+                                    <th>Marks Range</th>
+                                    <th>Result</th>
+                                    <th>Students</th>
+                                    <th>Share of Cohort</th>
+                                </tr>
+                            </thead>
+                            <tbody id="gradeTableBody">
+                                <tr><td colspan="5"><div class="skeleton skeleton-row"></div></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <script src="/vendor/lucide.min.js"></script>
+    <script src="/vendor/chart.umd.js"></script>
+    <script src="/js/app.js"></script>
+    <script>
+        const GRADE_SCALE = [
+            { grade: 'O',  range: '90–100', result: 'Excellent' },
+            { grade: 'A+', range: '80–89',  result: 'Outstanding' },
+            { grade: 'A',  range: '70–79',  result: 'Very Good' },
+            { grade: 'B+', range: '60–69',  result: 'Good' },
+            { grade: 'B',  range: '50–59',  result: 'Average' },
+            { grade: 'C',  range: '40–49',  result: 'Pass' },
+            { grade: 'F',  range: '0–39',   result: 'Fail' },
+        ];
+
+        let cachedStats = null;
+        let anCharts = {};
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            document.getElementById('analyticsExportBtn').addEventListener('click', () => Utils.exportStudentsCsv());
+
+            window.addEventListener('sms:themechange', () => {
+                if (cachedStats) renderCharts(cachedStats);
+            });
+
+            try {
+                const { data: stats } = await API.getStats();
+                cachedStats = stats;
+                renderStats(stats);
+                renderCharts(stats);
+                renderGradeTable(stats);
+            } catch (err) {
+                Toast.error('Analytics error', 'Failed to load analytics data');
+            }
+        });
+
+        function renderStats(s) {
+            document.getElementById('anTotalStudents').textContent = s.totalStudents ?? 0;
+            document.getElementById('anAvgMarks').textContent = s.averageMarks ?? 0;
+            document.getElementById('anPassRate').textContent = (s.passPercentage ?? 0) + '%';
+            document.getElementById('anFailCount').textContent = s.failedStudents ?? 0;
+
+            const band = GradeUtil.calculate(s.averageMarks ?? 0);
+            document.getElementById('anAvgMeta').textContent = `Band ${band.grade} (${band.result})`;
+            document.getElementById('anPassMeta').innerHTML = `<span class="up">${s.passedStudents ?? 0}</span> students passed`;
+            document.getElementById('anFailMeta').innerHTML = (s.failedStudents ?? 0) > 0
+                ? `<span class="down">${s.failedStudents}</span> below 40 marks`
+                : 'Zero failing records';
+        }
+
+        function resetCharts() {
+            Object.values(anCharts).forEach(c => c.destroy());
+            anCharts = {};
+        }
+
+        function renderCharts(s) {
+            if (typeof Chart === 'undefined') return;
+            ChartTheme.applyDefaults();
+            const t = ChartTheme.tokens();
+            resetCharts();
+
+            const legend = { position: 'bottom', labels: { color: t.muted, padding: 16, usePointStyle: true } };
+
+            const gradeLabels = Object.keys(s.gradeDistribution || {});
+            const gradeColors = gradeLabels.map(g => {
+                if (g === 'O' || g === 'A+') return t.success;
+                if (g === 'C') return t.warning;
+                if (g === 'F') return t.danger;
+                return t.c1;
+            });
+
+            anCharts.grade = new Chart(document.getElementById('anGradeChart'), {
+                type: 'bar',
+                data: {
+                    labels: gradeLabels,
+                    datasets: [{
+                        label: 'Students',
+                        data: Object.values(s.gradeDistribution || {}),
+                        backgroundColor: gradeColors,
+                        borderRadius: 6,
+                        maxBarThickness: 38
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { ticks: { color: t.muted }, grid: { display: false } },
+                        y: { beginAtZero: true, ticks: { color: t.muted, precision: 0 }, grid: { color: t.grid } }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+
+            anCharts.dept = new Chart(document.getElementById('anDeptChart'), {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(s.departmentDistribution || {}),
+                    datasets: [{
+                        label: 'Students',
+                        data: Object.values(s.departmentDistribution || {}),
+                        backgroundColor: t.c1,
+                        borderRadius: 6,
+                        maxBarThickness: 28
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { beginAtZero: true, ticks: { color: t.muted, precision: 0 }, grid: { color: t.grid } },
+                        y: { ticks: { color: t.muted }, grid: { display: false } }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+
+            anCharts.gender = new Chart(document.getElementById('anGenderChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(s.genderDistribution || {}),
+                    datasets: [{
+                        data: Object.values(s.genderDistribution || {}),
+                        backgroundColor: [t.c1, t.c3, t.c5],
+                        borderColor: t.surface,
+                        borderWidth: 2
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, cutout: '66%', plugins: { legend } }
+            });
+
+            anCharts.passFail = new Chart(document.getElementById('anPassFailChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['Passed', 'Failed'],
+                    datasets: [{
+                        data: [s.passedStudents ?? 0, s.failedStudents ?? 0],
+                        backgroundColor: [t.success, t.danger],
+                        borderColor: t.surface,
+                        borderWidth: 2
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, cutout: '66%', plugins: { legend } }
+            });
+        }
+
+        function renderGradeTable(s) {
+            const dist = s.gradeDistribution || {};
+            const total = s.totalStudents || 0;
+            document.getElementById('gradeTableBody').innerHTML = GRADE_SCALE.map(g => {
+                const count = dist[g.grade] || 0;
+                const pct = total > 0 ? ((count / total) * 100).toFixed(1) : '0.0';
+                return `<tr>
+                    <td><span class="grade-badge ${GradeUtil.getBadgeClass(g.grade)}">${Utils.escapeHtml(g.grade)}</span></td>
+                    <td class="tabular">${Utils.escapeHtml(g.range)}</td>
+                    <td><span class="status-badge ${GradeUtil.getStatusClass(g.result)}"><span class="status-dot"></span>${Utils.escapeHtml(g.result)}</span></td>
+                    <td class="cell-strong tabular">${count}</td>
+                    <td class="tabular">${pct}%</td>
+                </tr>`;
+            }).join('');
+        }
+    </script>
+</body>
+</html>

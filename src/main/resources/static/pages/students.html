@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="StudentMS Directory — search, filter, sort, and manage student academic records, grades, and transcripts.">
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#F7F8FA">
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0B0D12">
+    <title>All Students — StudentMS</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%234F46E5'/%3E%3Cpath d='M16 7 4 13l12 6 10-5v7h2v-8L16 7zm-7 9.5v4.5c0 2.5 3.1 4.5 7 4.5s7-2 7-4.5v-4.5l-7 3.5-7-3.5z' fill='%23FFFFFF'/%3E%3C/svg%3E">
+    <script>
+        (function () {
+            try {
+                var s = localStorage.getItem('sms_theme');
+                var t = (s === 'light' || s === 'dark') ? s : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+                document.documentElement.setAttribute('data-theme', t);
+            } catch (e) {}
+        })();
+    </script>
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+    <a href="#mainContent" class="skip-link">Skip to student directory</a>
+    <div class="app-container">
+        <aside class="sidebar" id="sidebar" aria-label="Primary navigation"></aside>
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+        <div class="main-wrapper">
+            <header class="header"></header>
+
+            <main class="main-content" id="mainContent">
+                <div class="page-header">
+                    <div>
+                        <h1 class="page-title">Students</h1>
+                        <p class="page-subtitle">Search, filter, sort, and manage academic records across all departments</p>
+                    </div>
+                    <div class="page-actions">
+                        <button type="button" class="btn btn-ghost" id="exportStudentsBtn">
+                            <i data-lucide="download"></i><span>Export CSV</span>
+                        </button>
+                        <a href="/pages/add-student.html" class="btn btn-primary" data-page="add-student.html">
+                            <i data-lucide="plus"></i><span>Add Student</span>
+                        </a>
+                    </div>
+                </div>
+
+                <section class="card card-flush table-card" aria-label="Student directory">
+                    <!-- Filter & Search Bar -->
+                    <div class="table-controls">
+                        <div class="search-box">
+                            <i data-lucide="search"></i>
+                            <input type="search" id="searchInput" placeholder="Filter by name, email, ID, or course..." aria-label="Filter students by keyword">
+                        </div>
+                        <div class="filter-group">
+                            <select class="filter-select" id="deptFilter" aria-label="Filter by department">
+                                <option value="">All departments</option>
+                                <option value="Computer Science">Computer Science</option>
+                                <option value="Electronics">Electronics</option>
+                                <option value="Mechanical">Mechanical</option>
+                                <option value="Civil">Civil</option>
+                                <option value="Mathematics">Mathematics</option>
+                                <option value="Physics">Physics</option>
+                                <option value="Chemistry">Chemistry</option>
+                                <option value="Biology">Biology</option>
+                                <option value="Business">Business</option>
+                                <option value="Arts">Arts</option>
+                            </select>
+                            <select class="filter-select" id="gradeFilter" aria-label="Filter by grade">
+                                <option value="">All grades</option>
+                                <option value="O">Grade O (90–100)</option>
+                                <option value="A+">Grade A+ (80–89)</option>
+                                <option value="A">Grade A (70–79)</option>
+                                <option value="B+">Grade B+ (60–69)</option>
+                                <option value="B">Grade B (50–59)</option>
+                                <option value="C">Grade C (40–49)</option>
+                                <option value="F">Grade F (0–39)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Active Filter Chips -->
+                    <div class="chip-row" id="filterChipsRow" hidden></div>
+
+                    <!-- Desktop Table (Sticky Header, Combined Person Cell, "⋯" Menu) -->
+                    <div class="table-wrapper hide-mobile" id="tableWrapper">
+                        <table class="data-table" id="studentsTable">
+                            <thead>
+                                <tr>
+                                    <th data-sort="fullName">Student</th>
+                                    <th data-sort="studentCode">Student ID</th>
+                                    <th data-sort="department">Department</th>
+                                    <th>Course &amp; Sem</th>
+                                    <th data-sort="marks">Marks</th>
+                                    <th data-sort="grade">Grade</th>
+                                    <th>Status</th>
+                                    <th class="col-actions"><span class="sr-only">Actions</span></th>
+                                </tr>
+                            </thead>
+                            <tbody id="studentsBody"></tbody>
+                        </table>
+                    </div>
+
+                    <!-- Mobile Cards -->
+                    <div class="student-cards-mobile" id="studentCardsMobile"></div>
+
+                    <!-- Loading Skeleton -->
+                    <div id="tableLoading" aria-live="polite">
+                        <div class="skeleton skeleton-row"></div>
+                        <div class="skeleton skeleton-row"></div>
+                        <div class="skeleton skeleton-row"></div>
+                        <div class="skeleton skeleton-row"></div>
+                    </div>
+
+                    <!-- Empty State -->
+                    <div class="empty-state" id="emptyState" hidden>
+                        <div class="empty-icon"><i data-lucide="users"></i></div>
+                        <h3>No matching student records</h3>
+                        <p>Try clearing one or more filters or enroll a new student in the directory.</p>
+                        <div class="flex gap-2">
+                            <button type="button" class="btn btn-ghost btn-sm" id="emptyClearFiltersBtn">Clear filters</button>
+                            <a href="/pages/add-student.html" class="btn btn-primary btn-sm" data-page="add-student.html">
+                                <i data-lucide="plus"></i><span>Add Student</span>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Pagination Footer -->
+                    <div class="table-footer" id="paginationArea">
+                        <span class="pagination-info" id="pageInfo">Showing 0–0 of 0</span>
+                        <div class="pagination-right">
+                            <label class="page-size" for="pageSizeSelect">
+                                <span>Rows</span>
+                                <select class="filter-select" id="pageSizeSelect" aria-label="Rows per page">
+                                    <option value="5">5</option>
+                                    <option value="10">10</option>
+                                    <option value="20">20</option>
+                                    <option value="50">50</option>
+                                </select>
+                            </label>
+                            <div class="pagination-controls" id="paginationControls" role="navigation" aria-label="Pagination"></div>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <!-- Student Detail Quick-View Modal -->
+    <div class="modal-overlay" id="studentDetailModal">
+        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="detailModalTitle">
+            <div class="modal-header">
+                <h2 class="modal-title" id="detailModalTitle">Student Details</h2>
+                <button type="button" class="modal-close" id="detailCloseIconBtn" aria-label="Close student details">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="modal-body" id="detailModalBody"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-ghost" id="detailCloseBtn">Close</button>
+                <a class="btn btn-ghost" id="detailFullProfileBtn" href="#">
+                    <i data-lucide="external-link"></i><span>Full Profile</span>
+                </a>
+                <button type="button" class="btn btn-primary" id="detailEditBtn">
+                    <i data-lucide="pencil"></i><span>Edit</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/vendor/lucide.min.js"></script>
+    <script src="/js/app.js"></script>
+    <script>
+        let currentPage = 0;
+        let pageSize = parseInt(localStorage.getItem('sms_pageSize') || '10', 10);
+        let sortBy = 'createdAt';
+        let sortDir = 'desc';
+        let searchKeyword = '';
+        let filterDept = '';
+        let filterGrade = '';
+        let currentStudentsById = {};
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const q = new URLSearchParams(window.location.search).get('q');
+            if (q) {
+                searchKeyword = q;
+                document.getElementById('searchInput').value = q;
+            }
+            const sizeSelect = document.getElementById('pageSizeSelect');
+            if (sizeSelect) {
+                sizeSelect.value = String([5, 10, 20, 50].includes(pageSize) ? pageSize : 10);
+            }
+            setupListeners();
+            loadStudents();
+        });
+
+        function setupListeners() {
+            document.getElementById('exportStudentsBtn').addEventListener('click', () => Utils.exportStudentsCsv());
+
+            document.getElementById('searchInput').addEventListener('input', Utils.debounce(e => {
+                searchKeyword = e.target.value.trim();
+                currentPage = 0;
+                loadStudents();
+            }));
+
+            document.getElementById('deptFilter').addEventListener('change', e => {
+                filterDept = e.target.value;
+                currentPage = 0;
+                loadStudents();
+            });
+
+            document.getElementById('gradeFilter').addEventListener('change', e => {
+                filterGrade = e.target.value;
+                currentPage = 0;
+                loadStudents();
+            });
+
+            document.getElementById('pageSizeSelect').addEventListener('change', e => {
+                pageSize = parseInt(e.target.value, 10) || 10;
+                localStorage.setItem('sms_pageSize', String(pageSize));
+                currentPage = 0;
+                loadStudents();
+            });
+
+            document.getElementById('emptyClearFiltersBtn').addEventListener('click', clearAllFilters);
+            document.getElementById('detailCloseIconBtn').addEventListener('click', () => Modal.hide('studentDetailModal'));
+            document.getElementById('detailCloseBtn').addEventListener('click', () => Modal.hide('studentDetailModal'));
+
+            // Sort by clicking table headers
+            document.querySelectorAll('th[data-sort]').forEach(th => {
+                th.addEventListener('click', () => {
+                    const field = th.dataset.sort;
+                    if (sortBy === field) {
+                        sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+                    } else {
+                        sortBy = field;
+                        sortDir = 'asc';
+                    }
+                    document.querySelectorAll('th[data-sort]').forEach(h => h.removeAttribute('aria-sort'));
+                    th.setAttribute('aria-sort', sortDir === 'asc' ? 'ascending' : 'descending');
+                    currentPage = 0;
+                    loadStudents();
+                });
+            });
+
+            document.getElementById('studentDetailModal').addEventListener('click', e => {
+                if (e.target.classList.contains('modal-overlay')) Modal.hide('studentDetailModal');
+            });
+
+            // Delegated click handler for "⋯" row action menus
+            document.addEventListener('click', e => {
+                const trigger = e.target.closest('[data-row-menu]');
+                if (!trigger) return;
+                e.stopPropagation();
+                const id = Number(trigger.dataset.rowMenu);
+                openRowMenu(trigger, id);
+            });
+        }
+
+        function clearAllFilters() {
+            searchKeyword = '';
+            filterDept = '';
+            filterGrade = '';
+            document.getElementById('searchInput').value = '';
+            document.getElementById('deptFilter').value = '';
+            document.getElementById('gradeFilter').value = '';
+            currentPage = 0;
+            loadStudents();
+        }
+
+        function renderFilterChips() {
+            const row = document.getElementById('filterChipsRow');
+            const chips = [];
+            if (searchKeyword) {
+                chips.push({ key: 'Search', value: searchKeyword, clear: () => { searchKeyword = ''; document.getElementById('searchInput').value = ''; } });
+            }
+            if (filterDept) {
+                chips.push({ key: 'Department', value: filterDept, clear: () => { filterDept = ''; document.getElementById('deptFilter').value = ''; } });
+            }
+            if (filterGrade) {
+                chips.push({ key: 'Grade', value: filterGrade, clear: () => { filterGrade = ''; document.getElementById('gradeFilter').value = ''; } });
+            }
+            if (chips.length === 0) {
+                row.hidden = true;
+                row.innerHTML = '';
+                return;
+            }
+            row.hidden = false;
+            row.innerHTML = chips.map((c, idx) => `
+                <span class="chip">
+                    <span class="chip-key">${Utils.escapeHtml(c.key)}:</span>
+                    <span>${Utils.escapeHtml(c.value)}</span>
+                    <button type="button" data-chip-clear="${idx}" aria-label="Remove ${Utils.escapeHtml(c.key)} filter">
+                        <i data-lucide="x"></i>
+                    </button>
+                </span>
+            `).join('') + `<button type="button" class="chip-clear" id="clearAllChipsBtn">Clear all</button>`;
+
+            row.querySelectorAll('[data-chip-clear]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const idx = Number(btn.dataset.chipClear);
+                    if (chips[idx]) {
+                        chips[idx].clear();
+                        currentPage = 0;
+                        loadStudents();
+                    }
+                });
+            });
+            row.querySelector('#clearAllChipsBtn').addEventListener('click', clearAllFilters);
+            lucide.createIcons();
+        }
+
+        function openRowMenu(trigger, id) {
+            const s = currentStudentsById[id];
+            if (!s) return;
+            const html = `
+                <button type="button" class="menu-item" data-action="quick-view" role="menuitem">
+                    <i data-lucide="eye"></i><span>Quick view</span>
+                </button>
+                <a href="/pages/student-details.html?id=${s.id}" class="menu-item" role="menuitem">
+                    <i data-lucide="file-text"></i><span>Full profile</span>
+                </a>
+                <button type="button" class="menu-item js-edit" data-action="edit" role="menuitem">
+                    <i data-lucide="pencil"></i><span>Edit record</span>
+                </button>
+                <div class="menu-sep js-delete" role="separator"></div>
+                <button type="button" class="menu-item is-danger js-delete" data-action="delete" role="menuitem">
+                    <i data-lucide="trash-2"></i><span>Delete student</span>
+                </button>
+            `;
+            const menu = Menu.open(trigger, html, { focusFirst: true });
+            if (!menu) return;
+
+            menu.querySelector('[data-action="quick-view"]').addEventListener('click', () => {
+                Menu.close();
+                viewStudent(s.id);
+            });
+            const editBtn = menu.querySelector('[data-action="edit"]');
+            if (editBtn) {
+                editBtn.addEventListener('click', () => {
+                    Menu.close();
+                    editStudent(s.id);
+                });
+            }
+            const delBtn = menu.querySelector('[data-action="delete"]');
+            if (delBtn) {
+                delBtn.addEventListener('click', () => {
+                    Menu.close();
+                    confirmDelete(s.id, s.fullName);
+                });
+            }
+        }
+
+        async function loadStudents() {
+            const loading = document.getElementById('tableLoading');
+            const empty = document.getElementById('emptyState');
+            const tbody = document.getElementById('studentsBody');
+            const cards = document.getElementById('studentCardsMobile');
+
+            renderFilterChips();
+            loading.hidden = false;
+            empty.hidden = true;
+            tbody.innerHTML = '';
+            cards.innerHTML = '';
+
+            try {
+                const res = await API.filterStudents({
+                    keyword: searchKeyword,
+                    department: filterDept,
+                    grade: filterGrade,
+                    page: currentPage,
+                    size: pageSize,
+                    sortBy,
+                    sortDir
+                });
+
+                const page = res.data;
+                const students = page.content || [];
+                loading.hidden = true;
+
+                currentStudentsById = {};
+                students.forEach(s => { currentStudentsById[s.id] = s; });
+
+                if (students.length === 0) {
+                    empty.hidden = false;
+                    updatePagination(page);
+                    lucide.createIcons();
+                    return;
+                }
+
+                // Combined avatar + name + email cell, status pill, grade badge, "⋯" action menu
+                tbody.innerHTML = students.map(s => `
+                    <tr>
+                        <td>
+                            <div class="person">
+                                <span class="avatar avatar-sm">${esc(Utils.getInitials(s.fullName))}</span>
+                                <div class="person-text">
+                                    <a href="/pages/student-details.html?id=${s.id}" class="person-name link">${esc(s.fullName)}</a>
+                                    <div class="person-sub">${esc(s.email)}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="cell-strong tabular">${esc(s.studentCode)}</td>
+                        <td>${esc(s.department)}</td>
+                        <td>
+                            <div class="person-text">
+                                <div class="person-name">${esc(s.course)}</div>
+                                <div class="person-sub">Sem ${esc(s.semester || '—')}</div>
+                            </div>
+                        </td>
+                        <td class="cell-strong tabular">${s.marks}</td>
+                        <td><span class="grade-badge ${GradeUtil.getBadgeClass(s.grade)}">${esc(s.grade)}</span></td>
+                        <td><span class="status-badge ${GradeUtil.getStatusClass(s.result)}"><span class="status-dot"></span>${esc(s.result)}</span></td>
+                        <td class="col-actions">
+                            <button type="button" class="icon-btn" data-row-menu="${s.id}" aria-label="Actions for ${esc(s.fullName)}" aria-haspopup="menu" aria-expanded="false">
+                                <i data-lucide="more-horizontal"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+
+                // Mobile cards
+                cards.innerHTML = students.map(s => `
+                    <article class="student-card-mobile">
+                        <div class="student-card-top">
+                            <div class="person">
+                                <span class="avatar">${esc(Utils.getInitials(s.fullName))}</span>
+                                <div class="person-text">
+                                    <a href="/pages/student-details.html?id=${s.id}" class="person-name link">${esc(s.fullName)}</a>
+                                    <div class="person-sub">${esc(s.email)}</div>
+                                </div>
+                            </div>
+                            <button type="button" class="icon-btn" data-row-menu="${s.id}" aria-label="Actions for ${esc(s.fullName)}" aria-haspopup="menu" aria-expanded="false">
+                                <i data-lucide="more-horizontal"></i>
+                            </button>
+                        </div>
+                        <div class="student-card-meta">
+                            <div>
+                                <div class="meta-label">Student ID</div>
+                                <div class="meta-value">${esc(s.studentCode)}</div>
+                            </div>
+                            <div>
+                                <div class="meta-label">Department</div>
+                                <div class="meta-value">${esc(s.department)}</div>
+                            </div>
+                            <div>
+                                <div class="meta-label">Marks &amp; Grade</div>
+                                <div class="flex items-center gap-2 mt-2">
+                                    <span class="meta-value">${s.marks}/100</span>
+                                    <span class="grade-badge ${GradeUtil.getBadgeClass(s.grade)}">${esc(s.grade)}</span>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="meta-label">Status</div>
+                                <div class="mt-2">
+                                    <span class="status-badge ${GradeUtil.getStatusClass(s.result)}"><span class="status-dot"></span>${esc(s.result)}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </article>
+                `).join('');
+
+                updatePagination(page);
+                lucide.createIcons();
+            } catch (err) {
+                loading.hidden = true;
+                Toast.error('Directory error', err.data?.message || 'Failed to load students');
+            }
+        }
+
+        function esc(str) { return Utils.escapeHtml(str ?? ''); }
+
+        function updatePagination(page) {
+            const total = page.totalElements ?? 0;
+            const start = total === 0 ? 0 : page.number * page.size + 1;
+            const end = Math.min((page.number + 1) * page.size, total);
+            document.getElementById('pageInfo').textContent = `Showing ${start}–${end} of ${total}`;
+
+            const ctrl = document.getElementById('paginationControls');
+            if ((page.totalPages ?? 0) <= 1) {
+                ctrl.innerHTML = '';
+                return;
+            }
+
+            let html = `<button type="button" class="page-btn" data-goto-page="${page.number - 1}" ${page.first ? 'disabled' : ''} aria-label="Previous page"><i data-lucide="chevron-left"></i></button>`;
+            const maxButtons = 5;
+            let startPage = Math.max(0, page.number - Math.floor(maxButtons / 2));
+            let endPage = Math.min(page.totalPages, startPage + maxButtons);
+            if (endPage - startPage < maxButtons) startPage = Math.max(0, endPage - maxButtons);
+
+            for (let i = startPage; i < endPage; i++) {
+                html += `<button type="button" class="page-btn ${i === page.number ? 'active' : ''}" data-goto-page="${i}" ${i === page.number ? 'aria-current="page"' : ''}>${i + 1}</button>`;
+            }
+            html += `<button type="button" class="page-btn" data-goto-page="${page.number + 1}" ${page.last ? 'disabled' : ''} aria-label="Next page"><i data-lucide="chevron-right"></i></button>`;
+            ctrl.innerHTML = html;
+
+            ctrl.querySelectorAll('[data-goto-page]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    if (btn.disabled) return;
+                    goToPage(Number(btn.dataset.gotoPage));
+                });
+            });
+            lucide.createIcons();
+        }
+
+        function goToPage(p) {
+            currentPage = p;
+            loadStudents();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        async function viewStudent(id) {
+            try {
+                const res = await API.getStudentById(id);
+                const s = res.data;
+                const body = document.getElementById('detailModalBody');
+                body.innerHTML = `
+                    <div class="profile-head">
+                        <span class="avatar">${esc(Utils.getInitials(s.fullName))}</span>
+                        <div class="grow">
+                            <h2>${esc(s.fullName)}</h2>
+                            <p>${esc(s.email)} &bull; ${esc(s.studentCode)}</p>
+                        </div>
+                        <div class="profile-badges">
+                            <span class="grade-badge ${GradeUtil.getBadgeClass(s.grade)}">${esc(s.grade)}</span>
+                            <span class="status-badge ${GradeUtil.getStatusClass(s.result)}"><span class="status-dot"></span>${esc(s.result)}</span>
+                        </div>
+                    </div>
+                    <div class="detail-grid mb-0">
+                        ${detailItem('Student ID', esc(s.studentCode))}
+                        ${detailItem('Department', esc(s.department))}
+                        ${detailItem('Course', esc(s.course))}
+                        ${detailItem('Year & Semester', `${s.yearOfStudy ? 'Year ' + s.yearOfStudy : '—'} • ${esc(s.semester || '—')}`)}
+                        ${detailItem('Marks Obtained', `${s.marks} / 100`)}
+                        ${detailItem('Phone', esc(s.phone || '—'))}
+                        ${detailItem('Gender', esc(s.gender))}
+                        ${detailItem('Date of Birth', esc(Utils.formatDate(s.dateOfBirth)))}
+                    </div>
+                `;
+                document.getElementById('detailFullProfileBtn').href = `/pages/student-details.html?id=${id}`;
+                document.getElementById('detailEditBtn').onclick = () => {
+                    Modal.hide('studentDetailModal');
+                    editStudent(id);
+                };
+                Modal.show('studentDetailModal');
+                lucide.createIcons();
+            } catch (err) {
+                Toast.error('Error', 'Failed to load student details');
+            }
+        }
+
+        function detailItem(label, value) {
+            return `<div class="detail-item"><div class="detail-label">${label}</div><div class="detail-value">${value}</div></div>`;
+        }
+
+        function editStudent(id) {
+            window.location.href = `/pages/edit-student.html?id=${id}`;
+        }
+
+        function confirmDelete(id, name) {
+            Modal.confirm(
+                'Delete student record',
+                `Permanently remove <strong>${Utils.escapeHtml(name)}</strong> from the student directory? This action cannot be undone.`,
+                async () => {
+                    try {
+                        await API.deleteStudent(id);
+                        Toast.success('Student deleted', `${name} has been removed.`);
+                        loadStudents();
+                    } catch (err) {
+                        Toast.error('Delete failed', err.data?.message || 'Unable to delete student');
+                    }
+                }
+            );
+        }
+    </script>
+</body>
+</html>
